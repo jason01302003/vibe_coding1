@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#150f22">
+<title>你是哪一種台灣小吃？</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #150f22;
+    --panel: #231a36;
+    --panel-2: #2f2347;
+    --line: #46365f;
+    --text: #fff4e0;
+    --sub: #b9aed1;
+    --red: #ff4d5e;
+    --orange: #ff8a3d;
+    --yellow: #ffc83d;
+    --green: #46e0a0;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    margin: 0;
+    background: #0c0815;
+    color: var(--text);
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Heiti TC", sans-serif;
+    line-height: 1.6;
+  }
+
+  /* 手機優先：內容置中，最大寬度 480px */
+  #app {
+    position: relative;
+    overflow: hidden;
+    max-width: 480px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0 auto;
+    padding: 52px 20px 32px;
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, #1f1435 0%, var(--bg) 60%);
+    box-shadow: 0 0 60px rgba(255, 77, 94, 0.15);
+  }
+
+  /* 夜市燈串 */
+  #app::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 30px;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 14px 18px, var(--yellow) 0 4px, transparent 5px) 0 0 / 96px 30px repeat-x,
+      radial-gradient(circle at 46px 18px, var(--red) 0 4px, transparent 5px) 0 0 / 96px 30px repeat-x,
+      radial-gradient(circle at 78px 18px, var(--green) 0 4px, transparent 5px) 0 0 / 96px 30px repeat-x,
+      linear-gradient(var(--line), var(--line)) 0 8px / 100% 2px no-repeat;
+    filter: drop-shadow(0 0 5px rgba(255, 200, 61, 0.8));
+    animation: twinkle 2.4s ease-in-out infinite;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeIn 0.35s ease both; }
+
+  h1 {
+    font-size: clamp(28px, 8.5vw, 38px);
+    line-height: 1.3;
+    margin: 24px 0 12px;
+    text-align: center;
+    color: var(--yellow);
+    text-shadow: 0 0 14px rgba(255, 200, 61, 0.55), 0 0 2px rgba(255, 77, 94, 0.8);
+  }
+  .intro { text-align: center; color: var(--sub); margin: 0 0 32px; }
+
+  /* 開始畫面的四個小圖示 */
+  .icons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 0 0 40px;
+  }
+  .icons > span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    font-size: 32px;
+    border-radius: 50%;
+    background: var(--panel-2);
+    border: 2px solid var(--c);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--c) 60%, transparent), inset 0 0 8px color-mix(in srgb, var(--c) 30%, transparent);
+    animation: float 3s ease-in-out infinite;
+  }
+  .icons > span:nth-child(2) { animation-delay: -0.75s; }
+  .icons > span:nth-child(3) { animation-delay: -1.5s; }
+  .icons > span:nth-child(4) { animation-delay: -2.25s; }
+
+  /* 每種小吃的代表色（開始畫面圓框、得分長條共用） */
+  [data-k="boba"]    { --c: var(--red); }
+  [data-k="tofu"]    { --c: var(--yellow); }
+  [data-k="lurou"]   { --c: var(--green); }
+  [data-k="chicken"] { --c: var(--orange); }
+
+  button {
+    font-family: inherit;
+    font-size: 18px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .btn-main {
+    display: block;
+    width: 100%;
+    min-height: 58px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--red), var(--orange));
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 0 18px rgba(255, 77, 94, 0.45);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .btn-sub {
+    display: block;
+    width: 100%;
+    min-height: 58px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    border: 2px solid var(--yellow);
+    border-radius: 14px;
+    background: transparent;
+    color: var(--yellow);
+    font-weight: 700;
+    transition: transform 0.12s ease, background 0.12s ease;
+  }
+  .btn-main:active, .btn-sub:active { transform: scale(0.97); }
+  .btn-sub:active { background: rgba(255, 200, 61, 0.12); }
+  .btn-main:focus-visible, .btn-sub:focus-visible, .option:focus-visible {
+    outline: 3px solid var(--green);
+    outline-offset: 3px;
+  }
+
+  /* 題目畫面 */
+  .progress-text { text-align: right; color: var(--sub); font-size: 14px; margin-bottom: 6px; }
+  .progress-bar { height: 10px; background: var(--panel-2); border-radius: 5px; overflow: hidden; }
+  .progress-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 5px;
+    background: linear-gradient(90deg, var(--yellow), var(--red));
+    box-shadow: 0 0 10px rgba(255, 77, 94, 0.7);
+    transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .quiz-body.enter .question { animation: slideIn 0.38s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .quiz-body.enter .option {
+    animation: slideIn 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--i) * 60ms + 60ms);
+  }
+  .question { font-size: clamp(20px, 5.8vw, 24px); line-height: 1.5; margin: 28px 0 22px; }
+
+  .option {
+    display: block;
+    width: 100%;
+    min-height: 60px;
+    padding: 12px 18px;
+    margin-bottom: 12px;
+    border: 2px solid var(--line);
+    border-radius: 14px;
+    background: var(--panel);
+    color: var(--text);
+    text-align: left;
+    line-height: 1.5;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+  }
+  .option:active { transform: scale(0.98); }
+  .option.selected {
+    border-color: var(--yellow);
+    background: var(--panel-2);
+    box-shadow: 0 0 16px rgba(255, 200, 61, 0.55);
+  }
+  .quiz-body.leaving .option:not(.selected) { opacity: 0.45; }
+  @media (hover: hover) {
+    .option:hover { border-color: var(--orange); background: var(--panel-2); }
+    .btn-main:hover { box-shadow: 0 0 26px rgba(255, 77, 94, 0.7); }
+  }
+
+  /* 結果畫面 */
+  .result-label { text-align: center; color: var(--sub); margin: 12px 0 0; }
+  .result-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 132px;
+    height: 132px;
+    margin: 12px auto 0;
+    font-size: 72px;
+    line-height: 1;
+    border-radius: 50%;
+    background: var(--panel-2);
+    border: 3px solid var(--yellow);
+    box-shadow: 0 0 28px rgba(255, 200, 61, 0.6), inset 0 0 18px rgba(255, 200, 61, 0.2);
+    animation: pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .result-name {
+    text-align: center;
+    font-size: clamp(30px, 9vw, 38px);
+    margin: 16px 0 20px;
+    color: var(--yellow);
+    text-shadow: 0 0 14px rgba(255, 200, 61, 0.55);
+    animation: fadeUp 0.5s ease 0.15s both;
+  }
+  .result-desc { margin: 0 0 20px; animation: fadeUp 0.5s ease 0.3s both; }
+  .match-box {
+    padding: 14px 16px;
+    margin-bottom: 28px;
+    border-radius: 14px;
+    background: var(--panel);
+    border-left: 4px solid var(--green);
+    animation: fadeUp 0.5s ease 0.45s both;
+  }
+  .match-title { font-size: 14px; color: var(--sub); }
+  .match-text { font-weight: 500; }
+  #screen-result .btn-main, #screen-result .btn-sub { animation: fadeUp 0.5s ease 0.6s both; }
+  .toast { text-align: center; color: var(--green); min-height: 24px; margin: 12px 0 0; }
+
+  /* 頂端列：音效開關 */
+  .topbar { display: flex; justify-content: flex-end; height: 36px; margin: -10px 0 0; position: relative; z-index: 1; }
+  .btn-sound {
+    width: 44px;
+    height: 44px;
+    margin-top: -4px;
+    padding: 0;
+    border: 2px solid var(--line);
+    border-radius: 50%;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1;
+    transition: border-color 0.15s ease, transform 0.12s ease;
+  }
+  .btn-sound:active { transform: scale(0.92); }
+  .btn-sound:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
+  .btn-sound[aria-pressed="true"] { border-color: var(--yellow); }
+
+  /* 結果頁：得分比例 */
+  .scores {
+    margin-bottom: 28px;
+    padding: 14px 16px 6px;
+    border-radius: 14px;
+    background: var(--panel);
+    animation: fadeUp 0.5s ease 0.55s both;
+  }
+  .scores-title { margin: 0 0 12px; font-size: 14px; font-weight: 500; color: var(--sub); }
+  .score-row {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    align-items: center;
+    column-gap: 12px;
+    margin-bottom: 12px;
+  }
+  .score-name { font-size: 15px; line-height: 1.3; margin-bottom: 4px; }
+  .score-row.top .score-name { color: var(--yellow); font-weight: 700; }
+  .bar { height: 10px; border-radius: 5px; background: var(--panel-2); overflow: hidden; }
+  .bar-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 5px;
+    background: var(--c);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--c) 70%, transparent);
+    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .score-val { min-width: 56px; text-align: right; font-size: 15px; font-weight: 700; line-height: 1.2; }
+  .score-val small { display: block; font-size: 12px; font-weight: 400; color: var(--sub); }
+
+  /* ===== CSS 繪製的小吃圖示 =====
+     所有尺寸用 em，整個圖示大小由 --s 決定（預設 32px）。
+     每個圖示由 .ico 裡的 6 個 <i> 組成，依序（nth-child）畫在下面。 */
+  .ico {
+    position: relative;
+    display: inline-block;
+    flex: none;
+    width: 1em;
+    height: 1em;
+    font-size: var(--s, 32px);
+    line-height: 0;
+    vertical-align: middle;
+    filter: drop-shadow(0 0.02em 0.02em rgba(0, 0, 0, 0.4));
+  }
+  .ico i { position: absolute; display: block; }
+
+  /* 珍珠奶茶：紅白吸管、杯蓋、奶茶杯、黑珍珠 */
+  .ico-boba i:nth-child(1) {
+    left: 0.56em; top: 0.03em; width: 0.07em; height: 0.46em;
+    border-radius: 0.035em;
+    background: repeating-linear-gradient(180deg, #ff4d5e 0 0.06em, #fff 0.06em 0.12em);
+    transform: rotate(10deg);
+  }
+  .ico-boba i:nth-child(2) {
+    left: 0.22em; top: 0.3em; width: 0.56em; height: 0.64em;
+    clip-path: polygon(0 0, 100% 0, 89% 100%, 11% 100%);
+    background: linear-gradient(180deg, #f6e3c4 0, #e3b985 35%, #c4863f 100%);
+  }
+  .ico-boba i:nth-child(2)::before {
+    content: ""; position: absolute; left: 0.07em; top: 0.07em;
+    width: 0.05em; height: 0.36em; border-radius: 0.03em;
+    background: rgba(255, 255, 255, 0.45);
+  }
+  .ico-boba i:nth-child(3) {
+    left: 0.18em; top: 0.24em; width: 0.64em; height: 0.08em;
+    border-radius: 0.04em; background: #fff;
+    box-shadow: 0 0.015em 0 rgba(0, 0, 0, 0.2);
+  }
+  .ico-boba i:nth-child(4) {
+    left: 0.32em; top: 0.82em; width: 0.1em; height: 0.1em; border-radius: 50%;
+    background: #3a2216;
+    box-shadow: 0.13em 0 0 #3a2216, 0.26em 0 0 #3a2216,
+                0.065em -0.1em 0 #3a2216, 0.195em -0.1em 0 #3a2216,
+                0.13em -0.2em 0 #3a2216;
+  }
+
+  /* 炸臭豆腐串：竹籤、三塊金黃豆腐、紅辣醬（整支斜放） */
+  .ico-tofu { transform: rotate(35deg); }
+  .ico-tofu i:nth-child(1) {
+    left: 0.47em; top: 0; width: 0.06em; height: 1em;
+    background: linear-gradient(90deg, #e6c488, #c49a58);
+    clip-path: polygon(50% 0, 100% 5%, 100% 100%, 0 100%, 0 5%);
+  }
+  .ico-tofu i:nth-child(n+2):nth-child(-n+4) {
+    left: 0.33em; width: 0.34em; height: 0.25em; border-radius: 0.06em;
+    background:
+      radial-gradient(circle at 30% 38%, #6e3a0e 0 5%, transparent 6%),
+      radial-gradient(circle at 68% 62%, #6e3a0e 0 5%, transparent 6%),
+      radial-gradient(circle at 58% 28%, #6e3a0e 0 4%, transparent 5%),
+      radial-gradient(circle at 35% 30%, #f6c15c, #d38a26 60%, #94500f);
+  }
+  .ico-tofu i:nth-child(2) { top: 0.09em; }
+  .ico-tofu i:nth-child(3) { top: 0.37em; left: 0.31em; }
+  .ico-tofu i:nth-child(4) { top: 0.65em; }
+  .ico-tofu i:nth-child(5) {
+    left: 0.37em; top: 0.06em; width: 0.26em; height: 0.09em;
+    border-radius: 0.05em 0.05em 0.04em 0.04em; background: #e32f3a;
+  }
+
+  /* 滷肉飯：白飯、滷肉、紅色飯碗、碗緣 */
+  .ico-lurou i:nth-child(1) {
+    left: 0.16em; top: 0.2em; width: 0.68em; height: 0.44em;
+    border-radius: 50% 50% 0 0 / 90% 90% 0 0;
+    background: radial-gradient(circle at 35% 30%, #fff, #efe6d0);
+  }
+  .ico-lurou i:nth-child(2) {
+    left: 0.2em; top: 0.24em; width: 0.6em; height: 0.22em;
+    border-radius: 0.3em 0.3em 0.12em 0.12em / 0.18em 0.18em 0.1em 0.1em;
+    background:
+      radial-gradient(circle at 22% 45%, #d49a68 0 0.025em, transparent 0.03em),
+      radial-gradient(circle at 55% 30%, #d49a68 0 0.03em, transparent 0.035em),
+      radial-gradient(circle at 78% 55%, #d49a68 0 0.025em, transparent 0.03em),
+      linear-gradient(180deg, #8c4623, #5e2c12);
+  }
+  .ico-lurou i:nth-child(2)::before, .ico-lurou i:nth-child(2)::after {
+    content: ""; position: absolute; top: 0.18em; width: 0.07em;
+    border-radius: 0 0 0.04em 0.04em; background: #5e2c12;
+  }
+  .ico-lurou i:nth-child(2)::before { left: 0.09em; height: 0.12em; }
+  .ico-lurou i:nth-child(2)::after  { left: 0.42em; height: 0.09em; }
+  .ico-lurou i:nth-child(3) {
+    left: 0.1em; top: 0.5em; width: 0.8em; height: 0.4em;
+    border-radius: 0.02em 0.02em 0.4em 0.4em;
+    background: linear-gradient(180deg, #f0463c, #c42b26);
+  }
+  .ico-lurou i:nth-child(3)::before {
+    content: ""; position: absolute; left: 0; top: 0.13em;
+    width: 100%; height: 0.04em; background: #ffd36b;
+  }
+  .ico-lurou i:nth-child(4) {
+    left: 0.06em; top: 0.47em; width: 0.88em; height: 0.07em;
+    border-radius: 0.035em; background: #fff6e6;
+    box-shadow: 0 0.01em 0 rgba(0, 0, 0, 0.18);
+  }
+  .ico-lurou i:nth-child(5) {
+    left: 0.32em; top: 0.88em; width: 0.36em; height: 0.07em;
+    border-radius: 0 0 0.04em 0.04em; background: #9c231f;
+  }
+
+  /* 鹽酥雞：三塊炸雞塊、紅白條紙袋、袋口 */
+  .ico-chicken i:nth-child(-n+3) {
+    background:
+      radial-gradient(circle at 25% 60%, #8f4d12 0 0.014em, transparent 0.02em),
+      radial-gradient(circle at 70% 40%, #8f4d12 0 0.014em, transparent 0.02em),
+      radial-gradient(circle at 55% 75%, #8f4d12 0 0.014em, transparent 0.02em),
+      radial-gradient(circle at 35% 30%, #f7c966, #d98f2b 60%, #a95d14);
+  }
+  .ico-chicken i:nth-child(1) {
+    left: 0.12em; top: 0.12em; width: 0.38em; height: 0.34em;
+    border-radius: 48% 52% 46% 54% / 55% 45% 55% 45%; transform: rotate(-12deg);
+  }
+  .ico-chicken i:nth-child(2) {
+    left: 0.5em; top: 0.08em; width: 0.36em; height: 0.34em;
+    border-radius: 52% 48% 54% 46% / 48% 55% 45% 52%; transform: rotate(10deg);
+  }
+  .ico-chicken i:nth-child(3) {
+    left: 0.31em; top: 0.01em; width: 0.38em; height: 0.32em;
+    border-radius: 50% 50% 46% 54% / 52% 48% 52% 48%; transform: rotate(-3deg);
+  }
+  .ico-chicken i:nth-child(4) {
+    left: 0.15em; top: 0.38em; width: 0.7em; height: 0.56em;
+    clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%);
+    background: repeating-linear-gradient(90deg, #fff 0 0.0875em, #ff4d5e 0.0875em 0.175em);
+  }
+  .ico-chicken i:nth-child(4)::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(0, 0, 0, 0.18));
+  }
+  .ico-chicken i:nth-child(5) {
+    left: 0.12em; top: 0.34em; width: 0.76em; height: 0.09em;
+    border-radius: 0.03em; background: #fff1d6;
+    box-shadow: 0 0.015em 0 rgba(0, 0, 0, 0.25);
+  }
+
+  /* 結果配對小吃名稱旁的小圖示 */
+  .match-text .ico { --s: 26px; margin-right: 6px; vertical-align: -6px; }
+
+  /* 動畫 */
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeUp  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+  @keyframes pop     { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
+  @keyframes float   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  @keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+  /* 使用者設定「減少動態效果」時，關閉動畫 */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+
+  /* 小螢幕（例如 iPhone SE）縮小一點間距 */
+  @media (max-width: 360px) {
+    #app { padding-left: 16px; padding-right: 16px; }
+    .icons { gap: 8px; }
+    .icons > span { width: 56px; height: 56px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <button class="btn-sound" id="btn-sound" type="button" aria-pressed="true" aria-label="音效：開">🔊</button>
+  </div>
+
+  <!-- 畫面 1：開始 -->
+  <section id="screen-start" class="screen active">
+    <h1>你是哪一種台灣小吃？</h1>
+    <p class="intro">回答 8 個小問題，看看你的個性像哪一種台灣小吃！</p>
+    <div class="icons" id="start-icons"></div>
+    <button class="btn-main" id="btn-start" type="button">開始測驗</button>
+  </section>
+
+  <!-- 畫面 2：題目 -->
+  <section id="screen-quiz" class="screen">
+    <div class="progress-text" id="progress-text"></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="quiz-body" id="quiz-body">
+      <h2 class="question" id="question-text"></h2>
+      <div id="options"></div>
+    </div>
+  </section>
+
+  <!-- 畫面 3：結果 -->
+  <section id="screen-result" class="screen">
+    <p class="result-label">你是……</p>
+    <div class="result-icon" id="result-icon"></div>
+    <h2 class="result-name" id="result-name"></h2>
+    <p class="result-desc" id="result-desc"></p>
+    <div class="match-box">
+      <div class="match-title">最速配小吃</div>
+      <div class="match-text" id="result-match"></div>
+    </div>
+    <div class="scores">
+      <h3 class="scores-title">你的四種小吃得分比例</h3>
+      <div id="score-list"></div>
+    </div>
+    <button class="btn-main" id="btn-restart" type="button">再測一次</button>
+    <button class="btn-sub" id="btn-copy" type="button">複製結果分享</button>
+    <p class="toast" id="toast"></p>
+  </section>
+
+</div>
+
+<script>
+/* ============================================================
+   資料區：想修改題目、選項或結果，只要改這一區就好
+   ============================================================ */
+
+/* 四種小吃：key 是內部代號，name 是顯示名稱，
+   icon 是 emoji，只用在「複製結果分享」的文字裡；
+   畫面上看到的圖示是用 CSS 畫的（樣式在 <style> 裡的 .ico-<key>） */
+const SNACKS = {
+  boba: {
+    name: "珍珠奶茶",
+    icon: "🧋",
+    desc: "你是人群中的開心果，走到哪裡都能很快跟大家打成一片。你喜歡新鮮事物，也很懂得享受生活的甜。",
+    matchSnack: "chicken",
+    matchText: "一甜一鹹，熱鬧加倍。"
+  },
+  tofu: {
+    name: "臭豆腐",
+    icon: "🍢",
+    desc: "第一印象可能有點距離感，但認識你的人都知道你超有魅力。你有自己的品味，不隨波逐流，越熟越讓人離不開。",
+    matchSnack: "lurou",
+    matchText: "懂你的人就是最穩的那個。"
+  },
+  lurou: {
+    name: "滷肉飯",
+    icon: "🍚",
+    desc: "你是朋友眼中的安心感來源，穩定、可靠又溫暖。你念舊、重視身邊的人，大家累了都會想到你。",
+    matchSnack: "tofu",
+    matchText: "你的包容剛好接住他的個性。"
+  },
+  chicken: {
+    name: "鹽酥雞",
+    icon: "🍗",
+    desc: "你隨性自由，越晚越有精神，總能帶來意想不到的樂趣。計畫趕不上變化？對你來說變化才好玩。",
+    matchSnack: "boba",
+    matchText: "深夜的完美組合。"
+  }
+};
+
+/* 8 道題目：每個選項的 snack 代表它對應的小吃（畫面上不會顯示）。
+   畫面上選項順序會隨機打亂，這裡的順序不影響結果。 */
+const QUESTIONS = [
+  {
+    text: "週末早上醒來，你最想做什麼？",
+    options: [
+      { text: "約朋友去新開的咖啡廳打卡", snack: "boba" },
+      { text: "一個人去逛二手書店或小眾展覽", snack: "tofu" },
+      { text: "在家煮早餐、順便整理房間", snack: "lurou" },
+      { text: "繼續睡，醒了再說", snack: "chicken" }
+    ]
+  },
+  {
+    text: "朋友心情不好來找你，你會…",
+    options: [
+      { text: "拉他出去玩，轉移注意力", snack: "boba" },
+      { text: "安靜聽他說，再給真心但直接的建議", snack: "tofu" },
+      { text: "帶著吃的去他家陪他", snack: "lurou" },
+      { text: "半夜騎車載他去兜風", snack: "chicken" }
+    ]
+  },
+  {
+    text: "分組報告時，你通常是…",
+    options: [
+      { text: "負責上台報告的那個", snack: "boba" },
+      { text: "提出最奇怪點子的那個", snack: "tofu" },
+      { text: "默默把大家的部分整合好的那個", snack: "lurou" },
+      { text: "最後一晚爆肝完成的那個", snack: "chicken" }
+    ]
+  },
+  {
+    text: "你的手機桌布比較像…",
+    options: [
+      { text: "跟朋友的合照", snack: "boba" },
+      { text: "喜歡的冷門樂團或藝術作品", snack: "tofu" },
+      { text: "家人或寵物", snack: "lurou" },
+      { text: "好久沒換，忘了是什麼", snack: "chicken" }
+    ]
+  },
+  {
+    text: "逛夜市時，你通常…",
+    options: [
+      { text: "先去玩套圈圈、射氣球", snack: "boba" },
+      { text: "專找沒吃過的奇怪攤位", snack: "tofu" },
+      { text: "直奔那幾家固定的老攤", snack: "lurou" },
+      { text: "沒有目標，邊走邊看", snack: "chicken" }
+    ]
+  },
+  {
+    text: "你的旅行風格是…",
+    options: [
+      { text: "熱門景點一個都不能少，照片拍好拍滿", snack: "boba" },
+      { text: "專走觀光客不會去的小巷", snack: "tofu" },
+      { text: "行程表和住宿都提早排好", snack: "lurou" },
+      { text: "說走就走，沒訂房也沒關係", snack: "chicken" }
+    ]
+  },
+  {
+    text: "別人第一次見到你，常說你…",
+    options: [
+      { text: "很好聊、好相處", snack: "boba" },
+      { text: "有點酷，不太好親近", snack: "tofu" },
+      { text: "看起來很可靠、很穩", snack: "lurou" },
+      { text: "很有趣，想法很跳", snack: "chicken" }
+    ]
+  },
+  {
+    text: "晚上 11 點，你通常在…",
+    options: [
+      { text: "跟朋友群組聊天", snack: "boba" },
+      { text: "看冷門電影或讀一本書", snack: "tofu" },
+      { text: "準備睡覺，明天要早起", snack: "lurou" },
+      { text: "正要出門吃宵夜", snack: "chicken" }
+    ]
+  }
+];
+
+/* ============================================================
+   程式邏輯區
+   ============================================================ */
+
+const $ = (id) => document.getElementById(id);
+const screens = { start: $("screen-start"), quiz: $("screen-quiz"), result: $("screen-result") };
+
+let scores;        // 四種小吃目前分數
+let picked;        // 每一題所選的小吃（用於平手規則）
+let current;       // 目前題號（0 開始）
+let locked;        // 避免連點造成重複計分
+let resultText;    // 結果分享文字
+let advanceTimer;  // 切換下一題的計時器
+
+/* 點擊音效：用 Web Audio 即時產生短音，不需要外部音檔。
+   第一次點擊後才建立 AudioContext（瀏覽器規定要有使用者操作才能發聲）。 */
+const Sound = (() => {
+  const KEY = "snackQuizSound";
+  let ctx = null;
+  let on = true;
+  try { on = localStorage.getItem(KEY) !== "off"; } catch (e) {}
+
+  function getCtx() {
+    if (!on) return null;
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try { ctx = new AC(); } catch (e) { return null; }
+    }
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+
+  function tone(freq, delay, dur, vol) {
+    const c = getCtx();
+    if (!c) return;
+    const t0 = c.currentTime + delay;
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol || 0.12, t0 + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain);
+    gain.connect(c.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.03);
+  }
+
+  return {
+    isOn: () => on,
+    toggle() {
+      on = !on;
+      try { localStorage.setItem(KEY, on ? "on" : "off"); } catch (e) {}
+      if (on) this.click();
+      return on;
+    },
+    click()   { tone(660, 0, 0.09); tone(990, 0.045, 0.09, 0.08); },
+    start()   { tone(523, 0, 0.1); tone(784, 0.07, 0.14); },
+    back()    { tone(440, 0, 0.1); tone(330, 0.07, 0.14); },
+    copy()    { tone(880, 0, 0.08); tone(1175, 0.08, 0.14); },
+    result()  { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.11, 0.24, 0.13)); }
+  };
+})();
+
+function updateSoundButton() {
+  const btn = $("btn-sound");
+  const on = Sound.isOn();
+  btn.textContent = on ? "🔊" : "🔇";
+  btn.setAttribute("aria-pressed", String(on));
+  btn.setAttribute("aria-label", on ? "音效：開" : "音效：關");
+}
+
+/* 建立 CSS 繪製的小吃圖示；size 是圖示邊長（px） */
+function makeIcon(key, size) {
+  const ico = document.createElement("span");
+  ico.className = "ico ico-" + key;
+  ico.setAttribute("aria-hidden", "true");
+  ico.style.setProperty("--s", size + "px");
+  for (let n = 0; n < 6; n++) ico.appendChild(document.createElement("i"));
+  return ico;
+}
+
+function showScreen(name) {
+  for (const key in screens) screens[key].classList.toggle("active", key === name);
+  window.scrollTo(0, 0);
+}
+
+/* Fisher-Yates 洗牌（回傳新陣列，不改動原資料） */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function resetState() {
+  clearTimeout(advanceTimer);
+  scores = {};
+  for (const key in SNACKS) scores[key] = 0;
+  picked = [];
+  current = 0;
+  locked = false;
+}
+
+function startQuiz() {
+  resetState();
+  $("toast").textContent = "";
+  showScreen("quiz");
+  renderQuestion();
+}
+
+/* 進度條寬度；instant 為 true 時不播動畫（用於重新開始） */
+function setProgress(ratio, instant) {
+  const fill = $("progress-fill");
+  if (instant) fill.style.transition = "none";
+  fill.style.width = (ratio * 100) + "%";
+  if (instant) {
+    fill.offsetWidth; // 強制重排，讓 transition: none 先生效
+    fill.style.transition = "";
+  }
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[current];
+  $("progress-text").textContent = (current + 1) + " / " + QUESTIONS.length;
+  setProgress(current / QUESTIONS.length, current === 0);
+  $("question-text").textContent = q.text;
+
+  const box = $("options");
+  box.innerHTML = "";
+  shuffle(q.options).forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "option";
+    btn.style.setProperty("--i", i);
+    btn.textContent = opt.text;
+    btn.addEventListener("click", () => choose(opt.snack, btn));
+    box.appendChild(btn);
+  });
+
+  // 重新播放題目進場動畫
+  const body = $("quiz-body");
+  body.classList.remove("enter", "leaving");
+  body.offsetWidth;
+  body.classList.add("enter");
+  locked = false;
+}
+
+/* 點選後先短暫標示所選項目、進度條前進，再切到下一題 */
+const ADVANCE_DELAY = 280; // 毫秒
+
+function choose(snack, btn) {
+  if (locked) return;
+  locked = true;
+  scores[snack] += 1;
+  picked.push(snack);
+  current += 1;
+
+  Sound.click();
+  btn.classList.add("selected");
+  $("quiz-body").classList.add("leaving");
+  setProgress(current / QUESTIONS.length);
+
+  advanceTimer = setTimeout(() => {
+    if (current < QUESTIONS.length) {
+      renderQuestion();
+    } else {
+      showResult(getWinner());
+    }
+  }, ADVANCE_DELAY);
+}
+
+/* 分數最高者為結果；平手時以第 8 題所選的小吃為準，
+   若第 8 題的小吃不在同分名單中，則依序往前一題比對。 */
+function getWinner() {
+  const max = Math.max(...Object.values(scores));
+  const tied = Object.keys(scores).filter((k) => scores[k] === max);
+  if (tied.length === 1) return tied[0];
+  for (let i = picked.length - 1; i >= 0; i--) {
+    if (tied.includes(picked[i])) return picked[i];
+  }
+  return tied[0]; // 理論上不會走到這裡
+}
+
+/* 得分比例：分數高的在前面（同分時結果小吃排最前），長條寬度 = 得分 / 題數 */
+function renderScores(winnerKey) {
+  const total = QUESTIONS.length;
+  const list = $("score-list");
+  list.innerHTML = "";
+  const keys = Object.keys(SNACKS).sort(
+    (a, b) => scores[b] - scores[a] || (b === winnerKey) - (a === winnerKey)
+  );
+  const fills = [];
+  keys.forEach((k) => {
+    const pct = Math.round(scores[k] / total * 1000) / 10; // 8 題時一定是整數或 .5
+    const row = document.createElement("div");
+    row.className = "score-row" + (k === winnerKey ? " top" : "");
+    row.dataset.k = k;
+
+    const main = document.createElement("div");
+    const name = document.createElement("div");
+    name.className = "score-name";
+    name.textContent = SNACKS[k].name;
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    const fill = document.createElement("div");
+    fill.className = "bar-fill";
+    bar.appendChild(fill);
+    main.append(name, bar);
+
+    const val = document.createElement("div");
+    val.className = "score-val";
+    val.textContent = pct + "%";
+    const small = document.createElement("small");
+    small.textContent = scores[k] + " 題";
+    val.appendChild(small);
+
+    row.append(makeIcon(k, 32), main, val);
+    list.appendChild(row);
+    fills.push([fill, pct]);
+  });
+  // 等整塊區域淡入後，長條再從 0 長出來
+  setTimeout(() => fills.forEach(([f, pct]) => { f.style.width = pct + "%"; }), 700);
+}
+
+function showResult(key) {
+  const s = SNACKS[key];
+  const match = SNACKS[s.matchSnack];
+  const iconBox = $("result-icon");
+  iconBox.textContent = "";
+  iconBox.appendChild(makeIcon(key, 76));
+  $("result-name").textContent = s.name;
+  $("result-desc").textContent = s.desc;
+  const matchBox = $("result-match");
+  matchBox.textContent = "";
+  matchBox.append(makeIcon(s.matchSnack, 26), match.name + "：" + s.matchText);
+  renderScores(key);
+  Sound.result();
+  resultText = "我是「" + s.name + "」" + s.icon + "！\n" + s.desc +
+    "\n最速配小吃：" + match.name + "：" + s.matchText +
+    "\n你是哪一種台灣小吃？來測測看！";
+  if (location.protocol === "http:" || location.protocol === "https:") {
+    resultText += "\n" + location.href;
+  }
+  showScreen("result");
+}
+
+function copyResult() {
+  const done = (msg, ok) => {
+    $("toast").textContent = msg;
+    if (ok) Sound.copy();
+  };
+  const fallback = () => {
+    const ta = document.createElement("textarea");
+    ta.value = resultText;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+    done(ok ? "已複製，快去分享給朋友！" : "複製失敗，請手動複製結果", ok);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(resultText)
+      .then(() => done("已複製，快去分享給朋友！", true))
+      .catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
+/* 開始畫面的四個小圖示 */
+const iconBox = $("start-icons");
+Object.keys(SNACKS).forEach((k) => {
+  const span = document.createElement("span");
+  span.dataset.k = k;
+  span.title = SNACKS[k].name;
+  span.appendChild(makeIcon(k, 38));
+  iconBox.appendChild(span);
+});
+
+$("btn-start").addEventListener("click", () => { Sound.start(); startQuiz(); });
+$("btn-restart").addEventListener("click", () => { Sound.back(); resetState(); showScreen("start"); });
+$("btn-copy").addEventListener("click", copyResult);
+$("btn-sound").addEventListener("click", () => { Sound.toggle(); updateSoundButton(); });
+
+updateSoundButton();
+resetState();
+</script>
+</body>
+</html>
