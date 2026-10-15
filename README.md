@@ -7,7 +7,7 @@
 
 ## 線上試玩
 
-（部署後貼上 GitHub Pages 網址）
+[今晚你是哪一攤？](https://jason01302003.github.io/vibe_coding1/)
 
 ## 功能
 
